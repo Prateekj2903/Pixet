@@ -1,7 +1,7 @@
-package com.javahelps.prateekpixet;
+package com.example.windo.pixet;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 
 public class ConvTextActivity extends AppCompatActivity {
 
