@@ -1,20 +1,27 @@
-package com.example.windo.pixet;
-
+package com.javahelps.prateekpixet;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import android.graphics.Bitmap;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
@@ -37,8 +44,7 @@ public class ShowImgActivity extends AppCompatActivity {
 
     ImageView img;
     Button submitButton, againButton;
-    //    File mfile;
-    Bitmap bitmap;
+    Bitmap bitmap = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,19 +54,42 @@ public class ShowImgActivity extends AppCompatActivity {
         submitButton = (Button) findViewById(R.id.submitButton);
         againButton = (Button) findViewById(R.id.againButton);
 
-        File mFile = (File) getIntent().getExtras().get("File");
-        try {
-            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.fromFile(mFile));
-            img.setImageBitmap(bitmap);
-        }catch (IOException e){
+//        ByteArrayInputStream bytes = new ByteArrayInputStream();
+        Intent intent = getIntent();
+        String currPath = intent.getStringExtra("path");
 
+        try {
+            bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(currPath));
+//            Drawable drawable = new BitmapDrawable(getResources(), bitmap);
+//            img.setImageDrawable(drawable);
+            img.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 195, 240, true));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+//        try {
+//            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), Uri.fromFile(mFile));
+////            bitmap = BitmapFactory.decodeStream(new ByteArrayInputStream(mFile.toByteArray()));
+////            bitmap = BitmapFactory.decodeFile(mFile.getAbsolutePath());
+//            img.setImageBitmap(bitmap);
+//            BitmapFactory.Options options = new BitmapFactory.Options();
+//            options.inSampleSize =1;
+//
+//            final Bitmap b = BitmapFactory.decodeFile(mFile.getAbsolutePath(), options);
+//
+//            img.setImageBitmap(bitmap);
+
+        Log.i("TAG", "decoded bitmap dimensions:" + bitmap.getWidth() + "x" + bitmap.getHeight());
+//        }
+//        catch (IOException e) {
+//
+//        }
 
         submitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 sendPic();
-            }});
+            }
+        });
 
         againButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,18 +100,18 @@ public class ShowImgActivity extends AppCompatActivity {
         });
     }
 
-    public String getStringImage(Bitmap bmp){
+    public String getStringImage(Bitmap bmp) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.PNG, 10, baos);
+        bmp.compress(Bitmap.CompressFormat.JPEG, 50, baos);
         byte[] imageBytes = baos.toByteArray();
         String encodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
 
-        System.out.println(encodedImage.length());
+//        System.out.println(encodedImage.length());
         return encodedImage;
     }
 
 
-    String url1 = "http://192.168.1.10:8079/image";//ip
+    String url1 = "http://192.168.43.242:8079/image";//ip
 
     private void sendPic() {
 
@@ -134,7 +163,6 @@ public class ShowImgActivity extends AppCompatActivity {
     }
 
 
-
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -164,7 +192,4 @@ public class ShowImgActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
         super.onStop();
     }
-
-
-
 }
