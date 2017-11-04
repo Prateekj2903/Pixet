@@ -1,22 +1,19 @@
 package com.example.windo.pixet;
 
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-
+import android.widget.Toast;
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -26,9 +23,8 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.master.permissionhelper.PermissionHelper;
-
+import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -92,7 +88,6 @@ public class MainActivity extends AppCompatActivity {
                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 if (cameraIntent.resolveActivity(getPackageManager()) != null) {
                     // Create the File where the photo should go
-//                    File photoFile = null;
                     try {
                         photoFile = createImageFile();
                     } catch (IOException ex) {
@@ -101,7 +96,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 if (photoFile != null) {
-                    Log.i("TAG", "onPermissionGranted: not null");
                     cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
                     startActivityForResult(cameraIntent, REQUEST_IMAGE_CAPTURE);
                 }
@@ -125,28 +119,16 @@ public class MainActivity extends AppCompatActivity {
      */
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-//        Log.i("TAG", "onActivityResult: " + " On activity entered");
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            try {
+                mImageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(mCurrentPhotoPath));
+                sendPic();
 
-//            Log.i("TAG", "onActivityResult: if entered");
-//            if (data != null) {
-                try {
-                    mImageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), Uri.parse(mCurrentPhotoPath));
-                    Log.i("TAG", "onActivityResult: " + mImageBitmap.getWidth() + " " + mImageBitmap.getHeight());
-//                    Intent intent = new Intent(MainActivity.this, ShowImgActivity.class);
-//                    intent.putExtra("path", mCurrentPhotoPath);
-//                    startActivity(intent);
-//                    mImageView.setImageBitmap(mImageBitmap);
-
-                        sendPic();
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
-
-
 
     public String getStringImage(Bitmap bmp) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -156,12 +138,9 @@ public class MainActivity extends AppCompatActivity {
         return encodedImage;
     }
 
-
-    String url1 = "http://192.168.1.7:8079/image";//ip
+    String url1 = "http://192.168.1.10:8079/image";//ip
 
     private void sendPic() {
-
-
         final ProgressDialog loading = ProgressDialog.show(this, "Uploading...", "Please wait...", false, false);
         Map<String, String> jsonParams = new HashMap<String, String>();
         String image = getStringImage(mImageBitmap);
@@ -175,7 +154,18 @@ public class MainActivity extends AppCompatActivity {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-//                                verificationSuccess(response);
+                        try {
+                            String a = response.getString("result");
+                            int len = response.getInt("len");
+                            Intent intent = new Intent(MainActivity.this, ConvTextActivity.class);
+                            intent.putExtra("Result", a);
+                            intent.putExtra("len", len);
+                            startActivity(intent);
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
                         loading.dismiss();
 //                                Toast.makeText(SpeachQuestionActivity.this, response + "", Toast.LENGTH_LONG).show();
                     }
@@ -186,7 +176,6 @@ public class MainActivity extends AppCompatActivity {
 //                                verificationFailed(error);
                         volleyError.printStackTrace();
                         loading.dismiss();
-
 //                                Toast.makeText(SpeachQuestionActivity.this, "" + volleyError, Toast.LENGTH_LONG).show();
                     }
                 }) {
@@ -208,34 +197,23 @@ public class MainActivity extends AppCompatActivity {
         requestQueue.add(myRequest);
     }
 
+    boolean doubleBackToExitPressedOnce = false;
 
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            String ans = intent.getExtras().getString("ans");
-
-//            Toast.makeText(getApplicationContext(), ans, Toast.LENGTH_SHORT);
-
-            Intent mintent = new Intent(MainActivity.this, ConvTextActivity.class);
-            intent.putExtra("str", ans);
-            startActivity(mintent);
-            finish();
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            super.onBackPressed();
+            return;
         }
-    };
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        LocalBroadcastManager.getInstance(this).registerReceiver((mMessageReceiver),
-                new IntentFilter("Answer")
-        );
-    }
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show();
 
-    @Override
-    protected void onStop() {
-
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
-        super.onStop();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce=false;
+            }
+        }, 2000);
     }
 }
