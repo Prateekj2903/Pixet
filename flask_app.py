@@ -50,7 +50,6 @@ def imageFunction():
         #Preprocessing of the original image for better accuracy
         preprocess_image()
 
-        
         vision_client = vision.Client()
 
         #Loading the image
@@ -73,44 +72,44 @@ def imageFunction():
         return jsonify(result=ans, len=len(text))
 
     
-    def get_size_of_scaled_image(img):
-        length, width = img.size
-        factor = max(1, int(1800 / length))
-        size = factor * length, factor * width
-        img_resized = img.resize(size, Image.ANTIALIAS)
-        return img_resized
+def get_size_of_scaled_image(img):
+    length, width = img.size
+    factor = max(1, int(1800 / length))
+    size = factor * length, factor * width
+    img_resized = img.resize(size, Image.ANTIALIAS)
+    return img_resized
+
+
+def preprocess_image():
+    image = Image.open(org_img_filename)
+ 
+    #Resizing the image
+    resized_image = get_size_of_scaled_image(image)
     
+    #Saving the resized image
+    resized_image.save(reshaped_img_filename,"JPEG", dpi=(300, 300))
 
-    def preprocess_image():
-        image = Image.open(org_img_filename)
-     
-        #Resizing the image
-        resized_image = get_size_of_scaled_image(image)
-        
-        #Saving the resized image
-        resized_image.save(reshaped_img_filename,"JPEG", dpi=(300, 300))
+    #Reading the image as numpy array to apply preprocessing
+    image = cv2.imread(reshaped_img_filename, 0)
 
-        #Reading the image as numpy array to apply preprocessing
-        image = cv2.imread(reshaped_img_filename, 0)
+    #removing noise
+    filtered = cv2.adaptiveThreshold(image.astype(np.uint8), 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, 3)
+    kernel = np.ones((1, 1), np.uint8)
+    #Opening is just another name of erosion followed by dilation
+    opening = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, kernel)
+    #Closing is reverse of Opening, Dilation followed by Erosion
+    closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
 
-        #removing noise
-        filtered = cv2.adaptiveThreshold(image.astype(np.uint8), 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 41, 3)
-        kernel = np.ones((1, 1), np.uint8)
-        #Opening is just another name of erosion followed by dilation
-        opening = cv2.morphologyEx(filtered, cv2.MORPH_OPEN, kernel)
-        #Closing is reverse of Opening, Dilation followed by Erosion
-        closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE, kernel)
+    #smoothening
+    _, th1 = cv2.threshold(image,180, 255, cv2.THRESH_BINARY)
+    _, th2 = cv2.threshold(th1, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    blur = cv2.GaussianBlur(th2, (1, 1), 0)
+    _, th3 = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-        #smoothening
-        _, th1 = cv2.threshold(image,180, 255, cv2.THRESH_BINARY)
-        _, th2 = cv2.threshold(th1, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        blur = cv2.GaussianBlur(th2, (1, 1), 0)
-        _, th3 = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-       preprocessed_img = cv2.bitwise_or(th3, closing)
-       
-       #Saving the preprocessed image
-       cv2.imwrite(preprocessed_img_filename, preprocessed_image)
+    preprocessed_img = cv2.bitwise_or(th3, closing)
+   
+    #Saving the preprocessed image
+    cv2.imwrite(preprocessed_img_filename, preprocessed_img)
 
 
 if __name__ == '__main__':
