@@ -3,9 +3,11 @@ package com.example.windo.pixet;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 public class ConvTextActivity extends AppCompatActivity {
@@ -27,6 +29,7 @@ public class ConvTextActivity extends AppCompatActivity {
 
         if(len == 0){
             text.setText("No Text found in Image");
+            text.setTextIsSelectable(false);
             text.setTextSize(25);
         }
         else {
@@ -39,6 +42,7 @@ public class ConvTextActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(ConvTextActivity.this, MainActivity.class);
+                finish();
                 startActivity(intent);
             }});
     }

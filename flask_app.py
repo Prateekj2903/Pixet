@@ -32,7 +32,7 @@ def imageFunction():
         data=request.get_json(force=True)
         newFile=data['imageFile']
 
-        print('Image Recieved')
+        print('Image Received')
         # Decoding the base64 string ie the image
         imgdata = base64.b64decode(newFile)
         

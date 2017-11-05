@@ -158,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
                             String a = response.getString("result");
                             int len = response.getInt("len");
                             Intent intent = new Intent(MainActivity.this, ConvTextActivity.class);
+                            finish();
                             intent.putExtra("Result", a);
                             intent.putExtra("len", len);
                             startActivity(intent);
