@@ -9,14 +9,10 @@ import cv2
 import io
 from PIL import Image, ImageFilter, ImageDraw, ImageFont
 import pytesseract
-# from google.cloud import vision
-
 
 org_img_filename = 'received_image.png'
 reshaped_img_filename = 'reshaped_image.png'
 preprocessed_img_filename = 'preprocessed_image.png'
-
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/Users/windo/Desktop/apikey.json"
 
 app = Flask(__name__)
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -51,20 +47,15 @@ def imageFunction():
         #Preprocessing of the original image for better accuracy
         preprocess_image()
 
-#         vision_client = vision.Client()
-
         #Loading the image
         with io.open(preprocessed_img_filename, 'rb') as image_file:
             content = image_file.read()
-#         image = vision_client.image(content=content, )
-
-        #Detecting text in image
-#         text = image.detect_text()
+            
         text = pytesseract.image_to_string(content)
 
         ans = ""
         if len(text) != 0:
-            ans = text[0].description
+            ans = text
             print("Extracted Text")
             print(ans)
 
